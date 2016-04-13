@@ -14,8 +14,8 @@ r=10
 def SDF(p):
     offset=np.array([0,10])
     d0=la.norm(p)-r
-    d1=la.norm(p-offset)-r/2
-    d2=la.norm(p+offset)-r/1.5
+    d1=la.norm(p-offset)-r/1.25
+    d2=la.norm(p+offset)-r/3.5
     return min(min(d0,d1),d2)
     #return d0
 
@@ -101,8 +101,8 @@ T=np.matrix([[cs,-sn,tx],
 lpts=[]
 for a in np.arange(0,math.pi/2,math.pi/40):
     print a
-    x=r*math.cos(a)+np.random.randn()*0.125
-    y=r*math.sin(a)+np.random.randn()*0.125
+    x=r*math.cos(a)+np.random.randn()*0.0125
+    y=r*math.sin(a)+np.random.randn()*0.0125
     p=np.array([x,y,1])
     lpts.append(p)
 pts=np.array(lpts)
