@@ -21,8 +21,10 @@ def SDF(p):
 
 def JSDF(p):
     delta=0.0001
-    dx=(SDF(p[0])-SDF(p[0]-delta))/delta
-    dy=(SDF(p[1])-SDF(p[1]-delta))/delta
+    ix=np.array([delta,0])
+    iy=np.array([0,delta])
+    dx=(SDF(p+ix)-SDF(p))/delta
+    dy=(SDF(p+iy)-SDF(p))/delta
     return np.array([dx,dy])
 
 def getT(theta):
