@@ -1,8 +1,8 @@
 '''
-Created on Mar 17, 2016
+Created on Sept 11, 2016
 
 @author: Francisco Dominguez
-
+A GaussNewtong version in 2D
 '''
 from visual import *
 import math
@@ -13,10 +13,12 @@ r=10
 
 def SDF(p):
     offset=np.array([0,10])
+    offset1=np.array([-5,-5])
     d0=la.norm(p)-r
     d1=la.norm(p-offset)-r/1.25
-    d2=la.norm(p+offset)-r/3.5
-    return min(min(d0,d1),d2)
+    d2=la.norm(p+offset)-r/1.35
+    d3=la.norm(p+offset1)-r/1.15
+    return min(min(min(d0,d1),d2),d3)
     #return d0
 
 def JSDF(p):
@@ -53,10 +55,20 @@ def JF(i,Q,P,theta):
     q=np.array([qxi,qyi])
     Dq=SDF(q)
     JDqx,JDqy=JSDF(q)
-    JF=np.matrix([[Dq*(JDqx*(-pxi*sn-pyi*cs)+JDqy*(pxi*cs-pyi*sn))],
-                 [Dq*JDqx],
-                 [Dq*JDqy]])
+    #Jacobian is a row vector not a columne vector
+    JF=np.matrix([Dq*(JDqx*(-pxi*sn-pyi*cs)+JDqy*(pxi*cs-pyi*sn)),
+                 Dq*JDqx,
+                 Dq*JDqy])
     return JF
+
+def JEls(P,theta):
+    t=0
+    T=getT(theta)
+    Q=T*P
+    n=shape(P)[1]
+    for i in range(n):
+        t+=JF(i,Q,P,theta)
+    return t/n
 
 def Els(P,theta):
     T=getT(theta)
@@ -70,15 +82,21 @@ def Els(P,theta):
         e+=SDF(q)**2
     return e/n
 
-def JEls(P,theta):
-    t=0
+
+def Hg(P,theta):
+    k=theta.shape[0]
+    H=np.matrix(np.eye(k,k))
+    g=np.matrix(np.zeros((k,1)))
     T=getT(theta)
     Q=T*P
     n=shape(P)[1]
     for i in range(n):
-        t+=JF(i,Q,P,theta)
-    return t/n
-
+        J=JF(i,Q,P,theta)
+        JT=J.T
+        D=SDF(P[:,i])
+        H+=JT*J
+        g+=JT*D;
+    return H,g
 #Draw SDF
 for x in linspace(-20, 20, 60):
     for y in linspace(-20,20,60):
@@ -94,13 +112,13 @@ alpha=-math.pi/4
 cs=math.cos(alpha)
 sn=math.sin(alpha)
 tx=5
-ty=-5;
+ty=-2;
 T=np.matrix([[cs,-sn,tx],
              [sn, cs,ty],
              [0 ,  0, 1]])
 #Create point to transform
 lpts=[]
-for a in np.arange(0,math.pi/2,math.pi/40):
+for a in np.arange(0,math.pi/4,math.pi/20):
     print a
     x=r*math.cos(a)+np.random.randn()*0.0125
     y=r*math.sin(a)+np.random.randn()*0.0125
@@ -116,12 +134,16 @@ print P
 theta=np.matrix([[0.0],[0.0],[0.0]])
 print "Els=",Els(P,theta)
 for i in range(20000):
-    JE=JEls(P,theta)
-    theta=theta-0.05*JE
+    #JE=JEls(P,theta)
+    #theta=theta-0.005*JE
+    H,g=Hg(P,theta)
+    Hi=np.linalg.inv(H)
+    dTheta=Hi*g
+    theta=theta-0.02*dTheta
     e=Els(P,theta)
     if e<0.05:
         break
-    if i % 100==0:
+    if i % 10==0:
         #print "JEls=",JE
         #print "theta =" , theta
         T=getT(theta)
